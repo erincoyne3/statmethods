@@ -1,0 +1,80 @@
+title: "statmethodsproject"
+author: "Erin Coyne"
+date: "11/17/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("MASS")
+```
+
+```{r echo = FALSE}
+#Steps:
+#1. run and observe initial regression model
+#2. variable reduction via AIC
+#3. get rid of multicollinearity via VIF
+#4. measure goodness of fit via ROC curve
+```
+
+```{r echo = FALSE}
+install.packages("car")
+library(car)
+library(MASS)
+```
+
+```{r echo = FALSE}
+#import breast cancer data, onehot to turn diagnosis into binary
+breastcancer <- read.csv("/Users/erincoyne/Desktop/Stat Methods/data.csv")
+breastcancer$diagnosis <- ifelse(breastcancer$diagnosis == "M", 1, 0)
+```
+
+```{r echo = FALSE}
+#create initial logistic regression model with all mean variables (10)
+initial_model <- glm(diagnosis ~ radius_mean + texture_mean + perimeter_mean + area_mean + smoothness_mean + compactness_mean + concavity_mean + concave.points_mean + symmetry_mean + fractal_dimension_mean, data = breastcancer, family = binomial)
+
+```
+
+```{r echo = FALSE}
+#run stepAIC on model 
+AICmodel <- stepAIC(initial_model)
+#--> gives lowest AIC with 6 variables (symmetry, radius, smoothness, area, concave.points, texture)
+```
+
+```{r echo = FALSE}
+#nested model hypothesis to see if we can use reduced model 
+#H0: all slopes 0, HA: at least one slope not 0
+#TS = 148.39-146.13 = 2.26
+#DOF = 562-558 = 4
+nestedPval <- pchisq(2.26,4, lower.tail = F)
+# --> 0.688 --> don't have evidence to accept alternate --> can use reduced model (6 vars)
+```
+
+```{r echo = FALSE}
+reduced_model <- glm(diagnosis ~ radius_mean + texture_mean  + area_mean + smoothness_mean + concave.points_mean + symmetry_mean, data = breastcancer, family = binomial)
+
+```
+
+```{r echo = FALSE}
+vifResults <- vif(reduced_model)
+#remove radius_mean and area_mean
+#remaining variables: texture_mean, smoothness_mean, concave.points_mean, symmetry_mean
+```
+
+```{r echo = FALSE}
+reduced_model2 <- glm(diagnosis ~  texture_mean + smoothness_mean + concave.points_mean + symmetry_mean, data = breastcancer, family = binomial)
+```
+
+```{r echo = FALSE}
+#create ROC curve
+pred <- prediction(reduced_model2$fitted.values, breastcancer$diagnosis)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+plot(perf, colorize = T)
+abline(a = 1, b = -1)
+```
+
+```{r echo = FALSE}
+auc.tmp <- performance(pred, "auc")
+print(as.numeric(auc.tmp@y.values))
+#area under curve = 0.9798
+```
