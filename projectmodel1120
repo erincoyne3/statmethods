@@ -80,14 +80,12 @@ print(as.numeric(auc.tmp@y.values))
 ```
 
 ```{r echo = FALSE}
-predictions <- predict(reduced_model22, newdata = test, type = "response")
+test_model <- glm(diagnosis ~  texture_mean + smoothness_mean + concave.points_mean, data = test, family = binomial)
 
 ```
 
 ```{r echo = FALSE}
-confusion_matrix <- table(test$diagnosis, predictions > 0.5)
-accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
-precision <- confusion_matrix[2, 2] / sum(confusion_matrix[, 2])
-recall <- confusion_matrix[2, 2] / sum(confusion_matrix[2, ])
-f1_score <- 2 * (precision * recall) / (precision + recall)
+pred2 <- prediction(test_model$fitted.values, test$diagnosis)
+auc.tmp2 <- performance(pred2, "auc")
+print(as.numeric(auc.tmp2@y.values))
 ```
