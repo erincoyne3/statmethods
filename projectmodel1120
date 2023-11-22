@@ -78,3 +78,16 @@ auc.tmp <- performance(pred, "auc")
 print(as.numeric(auc.tmp@y.values))
 #area under curve = 0.9798
 ```
+
+```{r echo = FALSE}
+predictions <- predict(reduced_model22, newdata = test, type = "response")
+
+```
+
+```{r echo = FALSE}
+confusion_matrix <- table(test$diagnosis, predictions > 0.5)
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+precision <- confusion_matrix[2, 2] / sum(confusion_matrix[, 2])
+recall <- confusion_matrix[2, 2] / sum(confusion_matrix[2, ])
+f1_score <- 2 * (precision * recall) / (precision + recall)
+```
